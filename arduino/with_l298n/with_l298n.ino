@@ -1,24 +1,42 @@
 //Include the motor driver library
-#include <AFMotor.h>
 #include <SoftwareSerial.h> // Include the SoftwareSerial library
 #define RX A0
 #define TX A1
 SoftwareSerial BTSerial(RX, TX);   // RX, TX pins for Bluetooth module
 
+// Motor Pins
+#define LMEnable 9
+#define LMForward 6
+#define LMBackward 7
+#define RMEnable 3
+#define RMForward 5
+#define RMBackward 4
+
 //Set the speed of the motors
-#define motorSpeed 75
+#define motorSpeed 120
 int errorX = 0;
 int errorY = 0;
-
-//Create objects for the motors
-AF_DCMotor leftMotor1(1);
-AF_DCMotor leftMotor2(2);
-AF_DCMotor rightMotor2(3);
-AF_DCMotor rightMotor1(4);
 
 void setup() {
   Serial.begin(9600);
   BTSerial.begin(9600); // Initialize the Bluetooth module
+
+  // Setting PinMode
+  pinMode(LMEnable, OUTPUT);
+  pinMode(LMForward, OUTPUT);
+  pinMode(LMBackward, OUTPUT);
+  pinMode(RMEnable, OUTPUT);
+  pinMode(RMForward, OUTPUT);
+  pinMode(RMBackward, OUTPUT);
+
+  // Initialize
+  digitalWrite(LMForward, LOW);
+  digitalWrite(LMBackward, LOW);
+  digitalWrite(RMForward, LOW);
+  digitalWrite(RMBackward, LOW); 
+
+  analogWrite(LMEnable, motorSpeed);
+  analogWrite(RMEnable, motorSpeed);
 }
 
 void loop() {
@@ -47,55 +65,53 @@ void loop() {
     errorX = 0;
     errorY = 0;
     }
-  if(errorY > 180) { errorY = 0;}
-  if(errorX > 40 || errorX <-40){errorX =0;}
+  if(errorY > 500 || errorX > 80 || errorX <-80) { 
+    errorY = 0;
+    errorX =0;
+    }
   
 
   // Determine the motor speeds based on the error
   int leftMotorSpeed = motorSpeed;
   int rightMotorSpeed = motorSpeed;
 
-  if (errorX > 7 && errorY>30) {
+  if (errorX > 20 && errorY>20) {
     // The robot is to the left of the desired position
-     rightMotorSpeed = motorSpeed - errorX;
-  } else if (errorX < -7 && errorY>30) {
+     rightMotorSpeed = motorSpeed - (errorX-16);
+     leftMotorSpeed = motorSpeed+(errorX-16);
+  } else if (errorX < 10) {
     // The robot is to the right of the desired position
-    leftMotorSpeed = motorSpeed + errorX;
+    leftMotorSpeed = motorSpeed - (16-errorX);
+    rightMotorSpeed = motorSpeed+(16-errorX);
   }else if(errorY > 30) {
     // Motor should move forward
-    leftMotorSpeed = motorSpeed + errorY/2;
-    rightMotorSpeed = motorSpeed + errorY/2;
+    leftMotorSpeed = motorSpeed + errorY/5;
+    rightMotorSpeed = motorSpeed + errorY/5;
   }
 
   // Setting Speed
-  leftMotor1.setSpeed(leftMotorSpeed );
-  leftMotor2.setSpeed(leftMotorSpeed );
-  rightMotor1.setSpeed(rightMotorSpeed );
-  rightMotor2.setSpeed(rightMotorSpeed );
-
+  analogWrite(LMEnable, leftMotorSpeed);
+  analogWrite(RMEnable, rightMotorSpeed);
+  
  if(errorY < 30 && errorX<7 && errorY >-7){
      Stop();
      Serial.println("stop");
-     delay(500);
+     delay(50);
      
   }else {
      Run();
      Serial.println("Run");
-     delay(500);
+     delay(50);
     
     }
 }
 
 void Run(){
-  leftMotor1.run(FORWARD);
-  leftMotor2.run(FORWARD);
-  rightMotor1.run(FORWARD);
-  rightMotor2.run(FORWARD);
+   digitalWrite(LMBackward, HIGH);
+   digitalWrite(RMBackward, HIGH);
   }
 
 void Stop() {
-  leftMotor1.run(RELEASE);
-  leftMotor2.run(RELEASE);
-  rightMotor1.run(RELEASE);
-  rightMotor2.run(RELEASE);
+   digitalWrite(LMBackward, LOW);
+   digitalWrite(RMBackward, LOW);
 }
