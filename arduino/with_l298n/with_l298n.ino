@@ -6,14 +6,18 @@ SoftwareSerial BTSerial(RX, TX);   // RX, TX pins for Bluetooth module
 
 // Motor Pins
 #define LMEnable 9
-#define LMForward 6
-#define LMBackward 7
+#define LMBackward 6
+#define LMForward 7
 #define RMEnable 3
-#define RMForward 5
-#define RMBackward 4
+#define RMBackward 5
+#define RMForward 4
 
 //Set the speed of the motors
-#define motorSpeed 120
+#define motorSpeed 130
+
+int Ythres = 30;
+int Xthres = 10;
+
 int errorX = 0;
 int errorY = 0;
 
@@ -50,68 +54,95 @@ void loop() {
     String yString = data.substring(commaIndex + 1);
     
     // Convert the string values to integers
-    errorX = xString.toInt();
     errorY = yString.toInt();
+    errorX = xString.toInt();
     
     // Print the (x, y) coordinate to the serial monitor
     Serial.print("Received coordinate: ");
     Serial.print(errorX);
     Serial.print(", ");
     Serial.println(errorY);
-  } 
-
-  // Fixing misleading values
-  else{
-    errorX = 0;
-    errorY = 0;
+  } else{
+      errorX = 0;
+      errorY = 0;
     }
-  if(errorY > 500 || errorX > 80 || errorX <-80) { 
+    // Fixing misleading values
+  if(errorY > 800 || errorX > 200 || errorX <-200) { 
     errorY = 0;
     errorX =0;
     }
   
-
   // Determine the motor speeds based on the error
   int leftMotorSpeed = motorSpeed;
   int rightMotorSpeed = motorSpeed;
 
-  if (errorX > 20 && errorY>20) {
+  // Speed error correction while turning
+  int delta = 0;
+  if(abs(errorY) > 400){
+     delta = abs(errorX)*0.5;
+   }else if(abs(errorY)>300){
+    delta = abs(errorX)*0.8;
+    }else if(abs(errorY)>200){
+    delta = abs(errorX)*1.6;
+    }else if(abs(errorY)>100){
+    delta = abs(errorX)*2;
+    }else if(abs(errorY)<100 && abs(errorY)> Ythres){
+    delta = abs(errorX)*3.2;
+    }
+  
+  if (errorX > 10) {
     // The robot is to the left of the desired position
-     rightMotorSpeed = motorSpeed - (errorX-16);
-     leftMotorSpeed = motorSpeed+(errorX-16);
-  } else if (errorX < 10) {
+    leftMotorSpeed = motorSpeed + delta;
+    rightMotorSpeed = motorSpeed -delta;
+    
+  } else if (errorX < -10) {
     // The robot is to the right of the desired position
-    leftMotorSpeed = motorSpeed - (16-errorX);
-    rightMotorSpeed = motorSpeed+(16-errorX);
-  }else if(errorY > 30) {
+    leftMotorSpeed = motorSpeed - delta;
+    rightMotorSpeed = motorSpeed +delta;
+    
+  }else if(errorY > Ythres) {
     // Motor should move forward
     leftMotorSpeed = motorSpeed + errorY/5;
     rightMotorSpeed = motorSpeed + errorY/5;
   }
 
-  // Setting Speed
+  if(leftMotorSpeed>250 && rightMotorSpeed > 250){
+    // Fixing Overspeed issue
+        leftMotorSpeed = 250;
+        rightMotorSpeed = 250;
+      }
+
+  // Setting Speed to the Enable pins
   analogWrite(LMEnable, leftMotorSpeed);
   analogWrite(RMEnable, rightMotorSpeed);
-  
- if(errorY < 30 && errorX<7 && errorY >-7){
-     Stop();
-     Serial.println("stop");
-     delay(50);
-     
-  }else {
+
+ // Run and stop robot according to the conditions 
+ if(errorY>Ythres){
      Run();
      Serial.println("Run");
-     delay(50);
+     delay(25);
+    
+  } else if(errorY < Ythres && errorX<10 && errorX >-10){
+     Stop();
+     Serial.println("stop");
+     delay(5);
+     
+    } else {
+     Run();
+     Serial.println("Run");
+     delay(25);
     
     }
 }
 
 void Run(){
-   digitalWrite(LMBackward, HIGH);
-   digitalWrite(RMBackward, HIGH);
+  // Function for running the motors
+   digitalWrite(LMForward, HIGH);
+   digitalWrite(RMForward, HIGH);
   }
 
 void Stop() {
-   digitalWrite(LMBackward, LOW);
-   digitalWrite(RMBackward, LOW);
+  // Function for stopping the motors
+   digitalWrite(LMForward, LOW);
+   digitalWrite(RMForward, LOW);
 }
