@@ -20,7 +20,7 @@ We're thrilled with the results of our project and look forward to making it mor
 
 # Coding Part
 ## Image Processing
-[This Notebook](https://github.com/alamgirakash2000/object-following-robot-using-vision/blob/main/test_v3.ipynb) is for image processing which track the target object and gets its coordintes, then send it to the bluetooth module
+[This Notebook](https://github.com/shahriar193/Object-following-robot-using-computer-vision/blob/main/test_v3.ipynb) is for image processing which track the target object and gets its coordintes, then send it to the bluetooth module
 
 ## Arduino Coding
-[This](https://github.com/alamgirakash2000/object-following-robot-using-vision/tree/main/arduino/with_l298n) is our Arduino coding part which received the coordinate from bluetooth module and make the motors to follow that coordinate.
+[This](https://github.com/shahriar193/Object-following-robot-using-computer-vision/blob/main/arduino/with_l298n/with_l298n.ino) is our Arduino coding part which received the coordinate from bluetooth module and make the motors to follow that coordinate.
